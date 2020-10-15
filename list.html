@@ -1,0 +1,53 @@
+<style>
+  #module_{{ModuleID}} .container {width: 100%}
+  #module_{{ModuleID}} .news-img {overflow: hidden}
+  #module_{{ModuleID}} .news-img img{width:100%}
+  #module_{{ModuleID}} .news-img a{display:block}
+  #module_{{ModuleID}} .news-title{color: #999;clear:both;overflow:hidden;font-weight:bold;font-size:14px;text-overflow:ellipsis;display: -webkit-box;-webkit-line-clamp:1;-webkit-box-orient: vertical;margin-top: 10px;}
+  #module_{{ModuleID}} .news-desc{clear:both;overflow:hidden;color:gray;padding:3px;font-size:12px;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;}
+  .news-time-info {display: flex;  justify-content: space-between;  align-items: center;}
+  #module_{{ModuleID}} .news-time{color:gray;padding:3px;font-size:12px;}
+  #module_{{ModuleID}} .news-detailbtn{color:white}
+  #module_{{ModuleID}} .article-list-item {box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); margin-bottom: 10px;}
+  #module_{{ModuleID}} .article-list-item img {
+    transition: all .6s ease;
+  }
+  #module_{{ModuleID}} .article-list-item:hover .news-title{color: #333;}
+  #module_{{ModuleID}} .article-list-item:hover .news-desc{color: #666;}
+  #module_{{ModuleID}} .article-list-item:hover img {
+    transform: scale(1.2);
+  }
+  #module_{{ModuleID}} .list-content {
+    padding: 0 10px;
+  }
+  /*下面的div中 class = col-**表示界面响应式设置，遵守bootstrap的规则，如 col-lg-4 表示PC屏显示3列(12/4=3)
+  col-xs-12 表示手机屏显示一列(12/12=1),详细请参考 http://v3.bootcss.com/css/#grid	
+  */
+  </style>
+  <!--所有的文章项目应该包含在一个DIV里，并且这个DIV要有一个news-container的css类名-->
+  <div class='news-container'>
+  <!--for循环读取文章数据-->
+  {% for art in NewsList %}
+  <div class='col-lg-3 col-md-4 col-sm-6 col-xs-12'>
+  <div class='article-list-item'>
+    <div class='news-img'>
+      <a href="{{art.DetailUrl}}">
+        <img src='{{art.ImgUrl}}'>
+      </a>
+    </div>
+    <div class="list-content">
+    <a href="{{art.DetailUrl}}" class='news-title'>{{art.Title}}</a>  
+    <a href="{{art.DetailUrl}}" class='news-desc'>{{art.Descriptor}}</a>
+    <div class='news-time-info'>
+      <span class='news-time'>{{art.PublishTime|date('Y-m-d')}}</span>
+      <span style='float:right'><a href='{{art.DetailUrl}}' class='news-detailbtn btn btn-sm btn-primary'>详情</a></span>
+    </div>
+  </div>
+  </div>
+  </div>
+  {% endfor %}
+  </div>
+  {% if PageCount > 1 %}
+  <div class="page-nav">{{Pager}}</div>
+  {% endif %}
+  

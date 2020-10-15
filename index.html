@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pixel Animator</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .root {
+        position: relative;
+        width: 1024px;
+        display: flex;
+        margin: 0 auto;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        width: 100%;
+        overflow: hidden;
+      }
+      .card-container {
+        display: flex;
+        transition: 0.5s ease all;
+      }
+      .content {
+        height: auto;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background: rgba(102, 102, 102, 1);
+        padding-left: 50px;
+        padding-right: 50px;
+      }
+      .img {
+        display: block;
+        flex: 1;
+      }
+      .title {
+        width: 100%;
+        font-size: 16px;
+        font-weight: normal;
+        padding-bottom: 20px;
+        padding-left: 20px;
+        padding-right: 20px;
+        position: relative;
+        color: #fff;
+      }
+      .title::after {
+        border-bottom: 1px solid #ddd;
+        content: "";
+        width: 100%;
+        height: 1px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+      }
+      .customCardItem {
+        width: 1024px;
+        background: rgba(102, 102, 102, 1);
+        display: flex;
+        justify-content: center;
+      }
+      .buttonGroup {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        bottom: 0;
+        right: -40px;
+      }
+      .prevButton,
+      .nextButton {
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .prevButton {
+        background-color: #ededed;
+      }
+      .nextButton {
+        background-color: #333333;
+      }
+
+      .smallRoot {
+        display: none;
+      }
+
+      @media screen and (max-width: 992px) {
+        .root {
+          display: none;
+        }
+        .smallRoot {
+          display: block;
+          width: 100%;
+        }
+
+        .customCardItem {
+          margin-bottom: 20px;
+          display: block;
+          width: 450px;
+        }
+        .buttonGroup {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="root">
+      <div class="container">
+        <div class="card-container">
+          <div class="customCardItem">
+            <img
+              class="img"
+              style="width: 450px; height: 300px"
+              src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+            />
+            <div class="content">
+              <div class="title">测试</div>
+            </div>
+          </div>
+
+          <div class="customCardItem">
+            <img
+              class="img"
+              style="width: 450px; height: 300px"
+              src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+            />
+            <div class="content">
+              <div class="title">测试</div>
+            </div>
+          </div>
+
+          <div class="customCardItem">
+            <img
+              class="img"
+              style="width: 450px; height: 300px"
+              src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+            />
+            <div class="content">
+              <div class="title">测试</div>
+            </div>
+          </div>
+
+          <div class="customCardItem">
+            <img
+              class="img"
+              style="width: 450px; height: 300px"
+              src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+            />
+            <div class="content">
+              <div class="title">测试</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="buttonGroup">
+        <div class="prevButton">prev</div>
+        <div class="nextButton">next</div>
+      </div>
+    </div>
+    <div class="smallRoot">
+      <div style="width: 100%">
+        <div style="overflow: hidden">
+        <img
+          class="img"
+          style="width: 450px; height: 300px"
+          src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+        />
+      </div>
+        <div class="content">
+          <div class="title">测试</div>
+        </div>
+      </div>
+      <div style="width: 100%">
+        <img
+          class="img"
+          style="width: 450px; height: 300px"
+          src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1598890443706&di=d7ea9cf2dee2db89df366d4089b5186c&imgtype=0&src=http%3A%2F%2Fa3.att.hudong.com%2F14%2F75%2F01300000164186121366756803686.jpg"
+        />
+        <div class="content">
+          <div class="title">测试</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    function throttle(fn,wait){
+  var flag = true;
+  var timer = null;
+  return function(){
+    if(flag) {
+      fn.apply(this,arguments);
+      flag = false;
+      timer = setTimeout(() => {
+        flag = true
+      },wait)
+    }
+  }
+}
+
+  // init
+  const CARD_WIDTH = 1024;
+  const cardContainer = document.getElementsByClassName("card-container")[0];
+
+  function getAllCardWidth() {
+    const cardNum = document.getElementsByClassName("customCardItem");
+    return cardNum ? cardNum.length * CARD_WIDTH : 0;
+  }
+
+  function init() {
+    const allWidth = getAllCardWidth();
+
+    cardContainer.style.width = allWidth + "px";
+  }
+  init();
+
+  const prevButton = document.getElementsByClassName("prevButton")[0];
+  const nextButton = document.getElementsByClassName("nextButton")[0];
+
+  let offsetNum = 0;
+
+  function setOffsetNum(num) {
+    const allWidth = getAllCardWidth();
+    if (num === CARD_WIDTH) {
+      const offset = allWidth - CARD_WIDTH;
+      offsetNum = -offset;
+      cardContainer.style.transform = "translateX(" + -offset + "px)";
+      return;
+    }
+    if (num === -allWidth) {
+      offsetNum = 0;
+      cardContainer.style.transform = "translateX(0px)";
+      return;
+    }
+    cardContainer.style.transform = "translateX(" + num + "px)";
+  }
+
+  if (prevButton) {
+    prevButton.onclick = throttle(() => {
+      offsetNum = offsetNum + CARD_WIDTH;
+      setOffsetNum(offsetNum);
+    }, 300);
+  }
+
+  if (nextButton) {
+    nextButton.onclick = throttle(() => {
+      offsetNum = offsetNum - CARD_WIDTH;
+      setOffsetNum(offsetNum);
+    }, 300);
+  }
+    </script>
+  </body>
+</html>
