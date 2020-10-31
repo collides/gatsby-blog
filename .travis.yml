@@ -1,4 +1,7 @@
-language: ruby
-rvm:
- - 2.2
- - jruby
+language: node_js
+node_js:
+  - "12"
+install:
+  - npm install
+scripts:
+  - npm run deploy
