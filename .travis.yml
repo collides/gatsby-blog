@@ -4,11 +4,9 @@ node_js:
 install:
   - npm install
 deploy:
-  provider: script
+  provider: pages
   github_token: $GITHUB_TOKEN
-  script: npm run deploy
   skip_cleanup: true
+  local_dir: public
   on:
-    branch: 
-      - main
-      - master
+    branch: master
