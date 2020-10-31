@@ -3,6 +3,8 @@ node_js:
   - "12"
 install:
   - npm install
+  - npm run clean
+  - npm run build
 deploy:
   provider: pages
   github_token: $GITHUB_TOKEN
