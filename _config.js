@@ -1,6 +1,6 @@
 module.exports = {
   /** Site MetaData (Required all)*/
-  title: `hui blog`,                           // (* Required)
+  title: ` Hui blog`,                           // (* Required)
   description: `record the daily、study notes、difficulties encountered in life`,          // (* Required)
   author: `zhangYunHui`,                         // (* Required)
   language: 'cn',                        // (* Required) html lang, ex. 'en' | 'en-US' | 'ko' | 'ko-KR' | ...

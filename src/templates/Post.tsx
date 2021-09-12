@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as React from 'react';
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
 import { graphql, Link } from 'gatsby';
 import moment from 'moment';
 import { FontAwesomeIcon as Fa } from '@fortawesome/react-fontawesome';
 import { faListUl, faLayerGroup, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
-import AdSense from 'react-adsense';
 import {
   FacebookShareButton,
   LinkedinShareButton,
@@ -50,13 +49,13 @@ interface iConfig {
 }
 
 const Post = (props: postProps) => {
-  const isSSR = typeof window === 'undefined';
+  // const isSSR = typeof window === 'undefined';
 
   const { data, pageContext } = props;
   const isMobile = useSelector((state: RootState) => state.isMobile);
   const [yList, setYList] = useState([] as number[]);
   const [isInsideToc, setIsInsideToc] = useState(false);
-  const [commentEl, setCommentEl] = useState<JSX.Element | null>(null);
+  // const [commentEl, setCommentEl] = useState<JSX.Element | null>(null);
   const [colorMode] = useColorMode();
 
   const { markdownRemark } = data;
@@ -98,10 +97,10 @@ const Post = (props: postProps) => {
     return Array.from(resultKeywords) as string[];
   }, []);
 
-  const renderComment = () => {
-    const Comment = React.lazy(() => import('../components/Comment'));
-    setCommentEl(<Comment slug={slug} title={title} />);
-  };
+  // const renderComment = () => {
+  //   const Comment = React.lazy(() => import('../components/Comment'));
+  //   setCommentEl(<Comment slug={slug} title={title} />);
+  // };
 
   useEffect(() => {
     if (isMobile) {
@@ -142,13 +141,13 @@ const Post = (props: postProps) => {
     };
   }, [yList]);
 
-  useEffect(() => {
-    setCommentEl(null);
+  // useEffect(() => {
+  //   setCommentEl(null);
 
-    setTimeout(() => {
-      renderComment();
-    }, 1000);
-  }, [colorMode]);
+  //   setTimeout(() => {
+  //     renderComment();
+  //   }, 1000);
+  // }, [colorMode]);
 
   useEffect(() => {
     // scroll
@@ -158,7 +157,7 @@ const Post = (props: postProps) => {
     const scrollEvents = throttle(() => {
       const postContentHeight = document.querySelector('.blog-post')?.getBoundingClientRect().height ?? Infinity;
       if (window.scrollY + window.innerHeight * 1.75 - postContentOriginTop > postContentHeight) {
-        renderComment();
+        // renderComment();
         removeScrollEvent();
       }
     }, 250);
@@ -319,7 +318,7 @@ const Post = (props: postProps) => {
             </div>
           ) : null}
 
-          {isDevelopment ? (
+          {isDevelopment && (
             <>
               <aside className="ad ad-dev">
                 <span>Ads</span>
@@ -332,8 +331,9 @@ const Post = (props: postProps) => {
                 </div>
               ) : null}
             </>
-          ) : (
-            <>
+          )}
+          {/* TODO: 暂时不用 */}
+            {/* <>
               <aside className="ad">
                 <AdSense.Google
                   client={config.googleAdsenseClient || 'ca-pub-5001380215831339'}
@@ -345,8 +345,7 @@ const Post = (props: postProps) => {
               </aside>
 
               {!isSSR ? <Suspense fallback={<></>}>{commentEl}</Suspense> : null}
-            </>
-          )}
+            </> */}
         </div>
 
         {!isTableOfContents ? null : <Toc isOutside={true} toc={tableOfContents} />}
