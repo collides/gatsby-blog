@@ -2,6 +2,7 @@ const config = require('./_config');
 const { title, description, author, googleAnalytics, siteUrl, language } = config;
 
 const gatsbyConfig = {
+  pathPrefix: '/gatsby-blog',
   siteMetadata: { title, description, author, siteUrl, language },
 
   plugins: [
@@ -111,7 +112,7 @@ const gatsbyConfig = {
         name: title,
         short_name: title,
         description: description,
-        start_url: `/`,
+        start_url: `/gatsby-blog`,
         background_color: `#fff`,
         theme_color: `#6a737d`,
         theme_color_in_head: false,
