@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[ Hui blog | Feed]]></title><description><![CDATA[record the daily、study notes、difficulties encountered in life]]></description><link>https://github.com/collides</link><generator>GatsbyJS</generator><lastBuildDate>Thu, 16 Sep 2021 03:32:00 GMT</lastBuildDate><item><title><![CDATA[MySQL 总结]]></title><description><![CDATA[一条语句是怎么执行的 img 连接器  负责跟客户端建立连接，获取权限、维持和管理连接，建立连接后会保持长连接默认是 8 小时自动断开,  在 MySQL 执行过程中临时使用的内存都是存储在连接对象里的当连接断开才会释放资源 查询缓存  执行查询请求时会访问内存中的 K/V，如…]]></description><link>https://github.com/collides/2021-8-1-MySQL/</link><guid isPermaLink="false">https://github.com/collides/2021-8-1-MySQL/</guid><pubDate>Sun, 01 Aug 2021 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[ Hui blog | Feed]]></title><description><![CDATA[record the daily、study notes、difficulties encountered in life]]></description><link>https://github.com/collides</link><generator>GatsbyJS</generator><lastBuildDate>Sun, 26 Sep 2021 02:29:27 GMT</lastBuildDate><item><title><![CDATA[MySQL 总结]]></title><description><![CDATA[一条语句是怎么执行的 img 连接器  负责跟客户端建立连接，获取权限、维持和管理连接，建立连接后会保持长连接默认是 8 小时自动断开,  在 MySQL 执行过程中临时使用的内存都是存储在连接对象里的当连接断开才会释放资源 查询缓存  执行查询请求时会访问内存中的 K/V，如…]]></description><link>https://github.com/collides/2021-8-1-MySQL/</link><guid isPermaLink="false">https://github.com/collides/2021-8-1-MySQL/</guid><pubDate>Sun, 01 Aug 2021 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
 &lt;li&gt;
 &lt;p&gt;一条语句是怎么执行的&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;https://static001.geekbang.org/resource/image/0d/d9/0d2070e8f84c4801adbfa03bda1f98d9.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
@@ -139,6 +139,106 @@
 &lt;li&gt;如果落在黄色部分，那就包括两种情况 a. 若 row trx&lt;em&gt;id 在数组中，表示这个版本是由还没提交的事务生成的，不可见；b. 若 row trx&lt;/em&gt;id 不在数组中，表示这个版本是已经提交了的事务生成的，可见。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;更新逻辑：更新数据都是先读后写的，而这个读，只能读当前值，称为当前读 (current read)，所以 RR 其实为 读隔离。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;唯一索引和普通索引
+对于查询过程来说：
+a、普通索引，查到满足条件的第一个记录后，继续查找下一个记录，直到第一个不满足条件的记录
+b、唯一索引，由于索引唯一性，查到第一个满足条件的记录后，停止检索
+但是，两者的性能差距微乎其微。因为InnoDB根据数据页来读写的。
+对于更新过程来说：
+概念：change buffer
+当需要更新一个数据页，如果数据页在内存中就直接更新，如果不在内存中，在不影响数据一致性的前提下，InnoDB会将这些更新操作缓存在 change buffer 中。下次查询需要访问这个数据页的时候，将数据页读入内存，然后执行 change buffer 中的与这个页有关的操作。&lt;/p&gt;
+&lt;p&gt;change buffer 是可以持久化的数据。在内存中有拷贝，也会被写入到磁盘上&lt;/p&gt;
+&lt;p&gt;purge: 将 change buffer 中的操作应用到原数据页上，得到最新结果的过程，成为 purge
+访问这个数据页会触发 purge，系统有后台线程定期 purge，在数据库正常关闭的过程中，也会执行 purge&lt;/p&gt;
+&lt;p&gt;唯一索引的更新不能使用 change buffer&lt;/p&gt;
+&lt;p&gt;change buffer 用的是 buffer pool 里的内存，change buffer的大小，可以通过参数innodb&lt;em&gt;change&lt;/em&gt;buffer&lt;em&gt;max&lt;/em&gt;size 来动态设置。这个参数设置为 50 的时候，表示 change buffer 的大小最多只能占用 buffer pool 的 50%。&lt;/p&gt;
+&lt;p&gt;将数据从磁盘读入内存涉及随机 IO 的访问，是数据库里面成本最高的操作之一。
+change buffer 因为减少了随机磁盘访问，所以对更新性能的提升很明显。&lt;/p&gt;
+&lt;p&gt;change buffer使用场景
+在一个数据页做 purge 之前，change buffer 记录的变更越多，收益就越大。
+对于写多读少的业务来说，页面在写完以后马上被访问到的概率比较小，此时 change buffer 的使用效果最好。这种业务模型常见的就是账单类、日志类的系统。&lt;/p&gt;
+&lt;p&gt;反过来，假设一个业务的更新模式是写入之后马上会做查询，那么即使满足了条件，将更新先记录在 change buffer,但之后由于马上要访问这个数据页，会立即触发 purge 过程。
+这样随机访问 IO 的次数不会减少，反而增加了 change buffer 的维护代价。所以，对于这种业务模式来说，change buffer 反而起到了副作用。&lt;/p&gt;
+&lt;p&gt;索引的选择和实践：
+尽可能使用普通索引。
+redo log 主要节省的是随机写磁盘的IO消耗(转成顺序写)，而 change buffer 主要节省的则是随机读磁盘的IO消耗。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 选错索引&lt;/p&gt;
+&lt;p&gt;选错索引可能有两种情况：1.由于索引统计信息不准确，导致判断扫描行树不准确，这种情况可以用 analyze table 来解决 2.由于临时表，排序字段，导致优化器误判，这种情况可以用 force index 来强行指定索引，也可以通过修改语句引导优化器，还可以通过增加或者删除索引绕开这个问题&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;字符串字段创建索引&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;直接创建完整索引，这样可能比较占用空间&lt;/li&gt;
+&lt;li&gt;创建前缀索引，节省空间，但是可能增加查询扫描次数，并且不能使用覆盖索引&lt;/li&gt;
+&lt;li&gt;倒序存储，再创建前缀索引，用于绕过字符串本身前缀区分度不够的问题&lt;/li&gt;
+&lt;li&gt;创建 hash 字段索引，查询性能稳定，需要有额外的存储和计算消耗，跟第三种方式一样都不支持范围扫描&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;MySQL 刷脏页&lt;/li&gt;
+&lt;li&gt;第一种场景，InnoDB 的 redo log 写满了这时候系统会停止所有更新操作，把 checkpoint 往前推进，redo log 留出空间可以继续写&lt;/li&gt;
+&lt;li&gt;第二种场景，系统内存不足，需要新的内存页，而内存不够用的时候就需要淘汰一些数据页，空出内存给别的数据页使用，如果淘汰的是脏页，就需要将脏页写到磁盘&lt;/li&gt;
+&lt;li&gt;第三种场景，系统空闲的时候&lt;/li&gt;
+&lt;li&gt;第四种场景，系统正常关闭的情况，会把内存中的脏页都 flush 到磁盘上&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;   对性能的影响：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第一种是 redo log 写满了，要 flush 脏页，这种情况是 InnoDB 要尽量避免的，因为出现这种情况的时候整个系统就不能再接受更新了，所有更新都必须堵住。&lt;/li&gt;
+&lt;li&gt;第二种是 内存不够用了，要先将脏页写到磁盘，InnoDB 的策略是尽量使用内存，当要读入的数据页没有内存的时候，只能将一个最久不使用的数据页冲内存中 flush 掉，如果一个查询要淘汰的脏页个数太多会导致查询的响应时间明显变长，日志写满，更新全部堵住&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;   InnoDB 刷脏页的控制策略：使用 innodb&lt;em&gt;io&lt;/em&gt;capacity 参数，指定磁盘能力，建议设置成磁盘的 IOPS，&lt;/p&gt;
+&lt;p&gt;   指定刷盘速度，innodb&lt;em&gt;max&lt;/em&gt;dirty&lt;em&gt;pages&lt;/em&gt;pct 是脏页比例上限，默认值是 75%，InnoDB 会跟觉当前脏页的比例假设为 M，算出一个范围在 0 到 100 之间的数字:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;java&quot;&gt;&lt;pre class=&quot;language-java&quot;&gt;&lt;code class=&quot;language-java&quot;&gt;&lt;span class=&quot;token function&quot;&gt;F1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; 
+  &lt;span class=&quot;token keyword&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;=&lt;/span&gt;innodb_max_dirty_pages_pct then
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; 
+  &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;/&lt;/span&gt;innodb_max_dirty_pages_pct&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;   InnoDB 每次写入的日志都有一个序号，当前写入的序号跟 checkpoint 对应的序号之间的差值假设为 N，InnoDB 会根据这个 N 算出 [0, 100] 的数字，这个计算公式可以记为 F2(N)，N越大算出来的值越大&lt;/p&gt;
+&lt;p&gt;   然后，根据上述算得的 F1(M) 和 F2(N) 两个值，取其中较大的值记为 R，之后引擎可以按照 innodb&lt;em&gt;io&lt;/em&gt;capacity 定义的能力乘以 R% 来控制刷脏页的速度，也就是说，刷脏页速度适合脏页比例以及redo log 没有被 flush 的长度（或者比例）相关的，而且，脏页比例越大或者没有被 flush 的长度越大，刷脏页速度也就越大。&lt;/p&gt;
+&lt;p&gt;   &lt;img src=&quot;https://static001.geekbang.org/resource/image/cc/74/cc44c1d080141aa50df6a91067475374.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
+&lt;ol start=&quot;11&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;表数据删除&lt;/p&gt;
+&lt;p&gt;表数据存储：表数据信息可以存储在共享表空间里，可可以单独存储在一个以 .ibd 为后缀的文件里，由参数 innodb&lt;em&gt;file&lt;/em&gt;per_table 来控制，建议作为一个单独的文件来存储容易管理，并且在不需要的时候，使用 drop table 命令也可以直接把对应文件删除，如果存储在共享空间中即使表删除了空间也不会释放。&lt;/p&gt;
+&lt;p&gt;表结构信息存储：表结构定义占有的存储空间比较小，在 MySQL 8.0 之前，表结构的定义存在以 .frm 为后缀的文件里，在 MySQL 8.0 之后，则允许把表结构的定义信息存在系统数据表中&lt;/p&gt;
+&lt;p&gt;表数据删除：delete 命令其实只把记录的位置，或者数据页标记为了 &lt;code class=&quot;language-text&quot;&gt;可复用&lt;/code&gt;，但磁盘文件大小是不会变的，只是一种逻辑删除，所以物理空间并没有释放，使用重建表，消除表因为大量的逻辑删除产生的空洞：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;alert table t engine=InnoDB&lt;/li&gt;
+&lt;li&gt;optimize table t = recreate + analyze&lt;/li&gt;
+&lt;li&gt;trutace table = drop + create&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;空洞：空洞就是那些被标记可复用但是还没被使用的存储空间，使用插入、修改、删除的时候可能会产生空洞&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;关于 count(*)&lt;/p&gt;
+&lt;p&gt;count(*) 的实现方式：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MyISAM 引擎将表的总行数存在了磁盘上，因此执行 count(*) 的时候会直接返回这个个数效率很高&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;InnoDB 引擎需要将数据一行一行的从引擎里面读出来然后累计计数&lt;/p&gt;
+&lt;p&gt;为什么 InnoDB 不使用缓存，因为即使同一个时刻多个查询，由于 MVCC 的原因返回多少行也是不确定的，这和事务设计有关系，可重复读是它的默认隔离级别，在代码上通过多版本并发控制，每一行记录都要判断是否对这个会话可见，因此只能一行一行判断，在能够用于就算 &quot;基于这个查询&quot; 的表的总行数。&lt;/p&gt;
+&lt;p&gt;InnoDB 引擎优化：InnoDB 是索引组织表，主键索引的叶子节点是数据，而普通索引树的叶子节点是主键值，所以普通索引比主键索引树小的多，因此 MySQL 优化器会找到最小的那棵树来遍历，在保证逻辑正确的前提下，尽量减少扫描的数据量，是数据库系统设计的通用法则之一。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;区别：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MyISAM 表虽然 count(*) 很快，但是不支持事务&lt;/li&gt;
+&lt;li&gt;show table status 命令虽然返回很快，但是不准确&lt;/li&gt;
+&lt;li&gt;InnoDB 会遍历全表，虽然结果准确但是会导致性能问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不同 count 用法的区别：&lt;/p&gt;
+&lt;p&gt;count() 是一个聚合函数，对于返回的结果集，一行一行判断，如果 count 函数的参数不是 null，累计值就加 1,否则不加，最后返回累计值。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;count 主键，InnoDB 引擎会遍历整张表，把每一行的 id 值取出来给 server 层，server 层拿到 id 后，判断不是为空的就按行累加。&lt;/li&gt;
+&lt;li&gt;count(1)，InnoDB 引擎遍历整张表，但不取值，server 层对于返回的每一行放一个数字 &quot;1&quot; 进去，判断是不可能为空的，按行累加。&lt;/li&gt;
+&lt;li&gt;count 字段，如果这个字段定义为 not null 的话，一行行从记录里读出字段判断不能为 null，按行累加，如果这个字段定义允许为 null，那么执行的时候判断到有可能为 null，还要把值取出来再判断一下，不是 null 才累加。&lt;/li&gt;
+&lt;li&gt;count *，并不会把全部字段取出来，而是专门做了优化，不取值，按行累加&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;按照效率排序的话，count(字段)&amp;#x3C;count(主键 id)&amp;#x3C;count(1)≈count(&lt;em&gt;)，所以我建议你，尽量使用 count(\&lt;/em&gt;)&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ol&gt;</content:encoded></item><item><title><![CDATA[One day]]></title><description><![CDATA[学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题]]></description><link>https://github.com/collides/post/</link><guid isPermaLink="false">https://github.com/collides/post/</guid><pubDate>Wed, 14 Oct 2020 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Redis 总结]]></title><description><![CDATA[一个 K/V 数据库包含什么？ 访问模块 动态库访问（动态链接库） 网络访问框架 Socket Server 请求解析 数据结构 / 操作模块 字符串 数组 链表 List Hash 索引模块  索引类型有很多，常见的有哈希表、B tree 、字典树，不同的索引结构在性能、空间…]]></description><link>https://github.com/collides/2021-7-1-Redis/</link><guid isPermaLink="false">https://github.com/collides/2021-7-1-Redis/</guid><pubDate>Wed, 01 Jul 2020 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
 &lt;li&gt;
