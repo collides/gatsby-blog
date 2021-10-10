@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[ Hui blog | Feed]]></title><description><![CDATA[record the daily、study notes、difficulties encountered in life]]></description><link>https://github.com/collides</link><generator>GatsbyJS</generator><lastBuildDate>Sun, 26 Sep 2021 02:29:27 GMT</lastBuildDate><item><title><![CDATA[MySQL 总结]]></title><description><![CDATA[一条语句是怎么执行的 img 连接器  负责跟客户端建立连接，获取权限、维持和管理连接，建立连接后会保持长连接默认是 8 小时自动断开,  在 MySQL 执行过程中临时使用的内存都是存储在连接对象里的当连接断开才会释放资源 查询缓存  执行查询请求时会访问内存中的 K/V，如…]]></description><link>https://github.com/collides/2021-8-1-MySQL/</link><guid isPermaLink="false">https://github.com/collides/2021-8-1-MySQL/</guid><pubDate>Sun, 01 Aug 2021 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[ Hui blog | Feed]]></title><description><![CDATA[record the daily、study notes、difficulties encountered in life]]></description><link>https://github.com/collides</link><generator>GatsbyJS</generator><lastBuildDate>Sun, 10 Oct 2021 05:10:31 GMT</lastBuildDate><item><title><![CDATA[MySQL 总结]]></title><description><![CDATA[一条语句是怎么执行的 img 连接器  负责跟客户端建立连接，获取权限、维持和管理连接，建立连接后会保持长连接默认是 8 小时自动断开,  在 MySQL 执行过程中临时使用的内存都是存储在连接对象里的当连接断开才会释放资源 查询缓存  执行查询请求时会访问内存中的 K/V，如…]]></description><link>https://github.com/collides/2021-8-1-MySQL/</link><guid isPermaLink="false">https://github.com/collides/2021-8-1-MySQL/</guid><pubDate>Sun, 01 Aug 2021 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
 &lt;li&gt;
 &lt;p&gt;一条语句是怎么执行的&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;https://static001.geekbang.org/resource/image/0d/d9/0d2070e8f84c4801adbfa03bda1f98d9.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
@@ -178,29 +178,31 @@ redo log 主要节省的是随机写磁盘的IO消耗(转成顺序写)，而 cha
 &lt;li&gt;创建 hash 字段索引，查询性能稳定，需要有额外的存储和计算消耗，跟第三种方式一样都不支持范围扫描&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/li&gt;
-&lt;li&gt;MySQL 刷脏页&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 刷脏页&lt;/p&gt;
+&lt;ul&gt;
 &lt;li&gt;第一种场景，InnoDB 的 redo log 写满了这时候系统会停止所有更新操作，把 checkpoint 往前推进，redo log 留出空间可以继续写&lt;/li&gt;
 &lt;li&gt;第二种场景，系统内存不足，需要新的内存页，而内存不够用的时候就需要淘汰一些数据页，空出内存给别的数据页使用，如果淘汰的是脏页，就需要将脏页写到磁盘&lt;/li&gt;
 &lt;li&gt;第三种场景，系统空闲的时候&lt;/li&gt;
 &lt;li&gt;第四种场景，系统正常关闭的情况，会把内存中的脏页都 flush 到磁盘上&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;   对性能的影响：&lt;/p&gt;
+&lt;/ul&gt;
+&lt;p&gt;对性能的影响：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;第一种是 redo log 写满了，要 flush 脏页，这种情况是 InnoDB 要尽量避免的，因为出现这种情况的时候整个系统就不能再接受更新了，所有更新都必须堵住。&lt;/li&gt;
 &lt;li&gt;第二种是 内存不够用了，要先将脏页写到磁盘，InnoDB 的策略是尽量使用内存，当要读入的数据页没有内存的时候，只能将一个最久不使用的数据页冲内存中 flush 掉，如果一个查询要淘汰的脏页个数太多会导致查询的响应时间明显变长，日志写满，更新全部堵住&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;   InnoDB 刷脏页的控制策略：使用 innodb&lt;em&gt;io&lt;/em&gt;capacity 参数，指定磁盘能力，建议设置成磁盘的 IOPS，&lt;/p&gt;
-&lt;p&gt;   指定刷盘速度，innodb&lt;em&gt;max&lt;/em&gt;dirty&lt;em&gt;pages&lt;/em&gt;pct 是脏页比例上限，默认值是 75%，InnoDB 会跟觉当前脏页的比例假设为 M，算出一个范围在 0 到 100 之间的数字:&lt;/p&gt;
+&lt;p&gt;InnoDB 刷脏页的控制策略：使用 innodb&lt;em&gt;io&lt;/em&gt;capacity 参数，指定磁盘能力，建议设置成磁盘的 IOPS，&lt;/p&gt;
+&lt;p&gt;指定刷盘速度，innodb&lt;em&gt;max&lt;/em&gt;dirty&lt;em&gt;pages&lt;/em&gt;pct 是脏页比例上限，默认值是 75%，InnoDB 会跟觉当前脏页的比例假设为 M，算出一个范围在 0 到 100 之间的数字:&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;java&quot;&gt;&lt;pre class=&quot;language-java&quot;&gt;&lt;code class=&quot;language-java&quot;&gt;&lt;span class=&quot;token function&quot;&gt;F1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; 
   &lt;span class=&quot;token keyword&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;=&lt;/span&gt;innodb_max_dirty_pages_pct then
     &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; 
   &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;M&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;/&lt;/span&gt;innodb_max_dirty_pages_pct&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;   InnoDB 每次写入的日志都有一个序号，当前写入的序号跟 checkpoint 对应的序号之间的差值假设为 N，InnoDB 会根据这个 N 算出 [0, 100] 的数字，这个计算公式可以记为 F2(N)，N越大算出来的值越大&lt;/p&gt;
-&lt;p&gt;   然后，根据上述算得的 F1(M) 和 F2(N) 两个值，取其中较大的值记为 R，之后引擎可以按照 innodb&lt;em&gt;io&lt;/em&gt;capacity 定义的能力乘以 R% 来控制刷脏页的速度，也就是说，刷脏页速度适合脏页比例以及redo log 没有被 flush 的长度（或者比例）相关的，而且，脏页比例越大或者没有被 flush 的长度越大，刷脏页速度也就越大。&lt;/p&gt;
-&lt;p&gt;   &lt;img src=&quot;https://static001.geekbang.org/resource/image/cc/74/cc44c1d080141aa50df6a91067475374.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
-&lt;ol start=&quot;11&quot;&gt;
+&lt;p&gt;InnoDB 每次写入的日志都有一个序号，当前写入的序号跟 checkpoint 对应的序号之间的差值假设为 N，InnoDB 会根据这个 N 算出 [0, 100] 的数字，这个计算公式可以记为 F2(N)，N越大算出来的值越大&lt;/p&gt;
+&lt;p&gt;然后，根据上述算得的 F1(M) 和 F2(N) 两个值，取其中较大的值记为 R，之后引擎可以按照 innodb&lt;em&gt;io&lt;/em&gt;capacity 定义的能力乘以 R% 来控制刷脏页的速度，也就是说，刷脏页速度适合脏页比例以及redo log 没有被 flush 的长度（或者比例）相关的，而且，脏页比例越大或者没有被 flush 的长度越大，刷脏页速度也就越大。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://static001.geekbang.org/resource/image/cc/74/cc44c1d080141aa50df6a91067475374.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;表数据删除&lt;/p&gt;
 &lt;p&gt;表数据存储：表数据信息可以存储在共享表空间里，可可以单独存储在一个以 .ibd 为后缀的文件里，由参数 innodb&lt;em&gt;file&lt;/em&gt;per_table 来控制，建议作为一个单独的文件来存储容易管理，并且在不需要的时候，使用 drop table 命令也可以直接把对应文件删除，如果存储在共享空间中即使表删除了空间也不会释放。&lt;/p&gt;
@@ -238,9 +240,132 @@ redo log 主要节省的是随机写磁盘的IO消耗(转成顺序写)，而 cha
 &lt;li&gt;count 字段，如果这个字段定义为 not null 的话，一行行从记录里读出字段判断不能为 null，按行累加，如果这个字段定义允许为 null，那么执行的时候判断到有可能为 null，还要把值取出来再判断一下，不是 null 才累加。&lt;/li&gt;
 &lt;li&gt;count *，并不会把全部字段取出来，而是专门做了优化，不取值，按行累加&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;按照效率排序的话，count(字段)&amp;#x3C;count(主键 id)&amp;#x3C;count(1)≈count(&lt;em&gt;)，所以我建议你，尽量使用 count(\&lt;/em&gt;)&lt;/p&gt;
+&lt;p&gt;按照效率排序的话，count(字段)&amp;#x3C;count(主键 id)&amp;#x3C;count(1)≈count(&lt;em&gt;)，所以我建议你，尽量使用 count(\&lt;/em&gt;。&lt;/p&gt;
 &lt;/li&gt;
-&lt;/ol&gt;</content:encoded></item><item><title><![CDATA[One day]]></title><description><![CDATA[学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题]]></description><link>https://github.com/collides/post/</link><guid isPermaLink="false">https://github.com/collides/post/</guid><pubDate>Wed, 14 Oct 2020 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Redis 总结]]></title><description><![CDATA[一个 K/V 数据库包含什么？ 访问模块 动态库访问（动态链接库） 网络访问框架 Socket Server 请求解析 数据结构 / 操作模块 字符串 数组 链表 List Hash 索引模块  索引类型有很多，常见的有哈希表、B tree 、字典树，不同的索引结构在性能、空间…]]></description><link>https://github.com/collides/2021-7-1-Redis/</link><guid isPermaLink="false">https://github.com/collides/2021-7-1-Redis/</guid><pubDate>Wed, 01 Jul 2020 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 排序&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL会为每个线程分配一个内存（sort&lt;em&gt;buffer）用于排序该内存大小为 sort&lt;/em&gt;buffer_size&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果排序的数据量小于 sort&lt;em&gt;buffer&lt;/em&gt;size，排序将会在内存中完成&lt;/li&gt;
+&lt;li&gt;如果排序数据量很大，内存中无法存下这么多数据，则会使用磁盘临时文件来辅助排序，也称外部排序&lt;/li&gt;
+&lt;li&gt;在使用外部排序时，MySQL会分成好几份单独的临时文件用来存放排序后的数据，然后在将这些文件合并成一个大文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 会通过遍历索引将满足条件的数据读取到 sort_buffer，并且按照排序字段进行快速排序&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果查询的字段不包含在辅助索引中，需要按照辅助索引记录的主键返回聚集索引取出所需字段&lt;/li&gt;
+&lt;li&gt;该方式会造成随机IO，在 MySQL5.6 提供了 MRR 的机制，会将辅助索引匹配记录的主键取出来在内存中进行排序，然后在回表&lt;/li&gt;
+&lt;li&gt;按照情况建立联合索引来避免排序所带来的性能损耗，允许的情况下也可以建立覆盖索引来避免回表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;全字段排序&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过索引将所需的字段全部读取到 sort_buffer 中&lt;/li&gt;
+&lt;li&gt;按照排序字段进行排序&lt;/li&gt;
+&lt;li&gt;将结果集返回给客户端&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt; 缺点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;造成 sort&lt;em&gt;buffer 中存放不下很多数据，因为除了排序字段还存放其他字段，对 sort&lt;/em&gt;buffer 的利用效率不高&lt;/li&gt;
+&lt;li&gt;当所需排序数据量很大时，会有很多的临时文件，排序性能也会很差&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;  优点：MySQL 认为内存足够大时会优先选择全字段排序，因为这种方式比 rowid 排序避免了一次回表操作&lt;/p&gt;
+&lt;p&gt;  rowid 排序
+1.通过控制排序的行数据的长度来让 sort&lt;em&gt;buffer 中尽可能多的存放数据，max&lt;/em&gt;length&lt;em&gt;for&lt;/em&gt;sort&lt;em&gt;data
+2.只将需要排序的字段和主键读取到 sort&lt;/em&gt;buffer 中，并按照排序字段进行排序
+3.按照排序后的顺序，取id进行回表取出想要获取的数据
+4.将结果集返回给客户端&lt;/p&gt;
+&lt;p&gt;  优点：更好的利用内存的 sort_buffer 进行排序操作，尽量减少对磁盘的访问&lt;/p&gt;
+&lt;p&gt;  缺点：回表的操作是随机 IO，会造成大量的随机读，不一定就比全字段排序减少对磁盘的访问&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 随机消息&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;使用 order by rand()&lt;/p&gt;
+&lt;p&gt;假设随机排序取前三个，逻辑为：1. 创建临时表，该临时表采用 memoery 引擎，从表中取出需要的值，对每个需要的值执行 rand() 函数生成一个大于 0 小于 1 的随机小数，并把这个随机数和值分别存入临时表中，此时扫描行数是全表数量。2. 然后对没有索引的临时表进行排序。3. 初始化 sort&lt;em&gt;buffer 从内存临时表中一行一行取出生成的随机数和位置信息存入 sort&lt;/em&gt;buffer 此时扫描行数为两次全表，根据随机数进行排序。4. 排序完成后取出前三个结果的位置信息，依次到内存临时表取出值返回给客户端 目前扫描行数为（全表 * 2 + 3）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://static001.geekbang.org/resource/image/2a/fc/2abe849faa7dcad0189b61238b849ffc.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
+&lt;p&gt;position 字段：对于有主键的 InnoDB 表来说，这个 rowid 就是主键 ID；对于没有主键的 InnoDB 表来说，这个 rowid 就是由系统生成的；MEMORY 引擎不是索引组织表。在这个里面，你可以认为它就是一个数组。因此，这个 rowid 其实就是数组的下标。&lt;/p&gt;
+&lt;p&gt;内存临时表：如果 tmp&lt;em&gt;table&lt;/em&gt;size 配置限制了内存临时表大小，超过该限制内存就会转为磁盘临时表&lt;/p&gt;
+&lt;p&gt;磁盘临时表：磁盘临时表引擎默认是 InnoDB &lt;code class=&quot;language-text&quot;&gt;internal_tmp_disk_storage_engine&lt;/code&gt; &lt;/p&gt;
+&lt;p&gt;优先队列排序算法：MySQL 5.6 版本引入该算法，假设取三个值最小的 rowId，该算法不需要排序整个表而是对于全表先取前三行构造成一个堆，取下一行对比大小假如比堆里的小就替换掉，可以通过 &lt;code class=&quot;language-text&quot;&gt;filesort_priority_queue_optimization&lt;/code&gt; 来设置&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;随机排序方法&lt;/p&gt;
+&lt;p&gt;取得这个表的主键 id 的最大值 M 和最小值 N，用随机函数生成一个最大值到最小值之间的数 X = (M-N)*rand() + N，取不小于 X 的第一个 id 的行。这个方法效率很高，因为取 max 和 min 都不需要扫描索引，但是会有 id 空洞的问题，因为选择不同行的概率不一样不是真正的随机，可以通过对表行数量生成随机数然后取数据。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;SQL 语句逻辑相同执行慢&lt;/p&gt;
+&lt;p&gt;SQL 逻辑相同,性能差异较大的,大概有以下几类:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;字段发生了转换，导致本该使用索引而没有用到索引&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;条件字段函数操作&lt;/li&gt;
+&lt;li&gt;隐式类型转换&lt;/li&gt;
+&lt;li&gt;隐式字符编码转换
+(如果驱动表的字符集比被驱动表得字符集小，关联列就能用到索引,如果更大,需要发生隐式编码转换,则不能用到索引,latin&amp;#x3C;gbk&amp;#x3C;utf8&amp;#x3C;utf8mb4)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;嵌套循环，驱动表与被驱动表选择错误&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;连接列上没有索引，导致大表驱动小表，或者小表驱动大表(但是大表走的是全表扫描) --连接列上建立索引&lt;/li&gt;
+&lt;li&gt;连接列上虽然有索引，但是驱动表任然选择错误。--通过 straight_join 强制选择关联表顺序&lt;/li&gt;
+&lt;li&gt;子查询导致先执行外表在执行子查询，也是驱动表与被驱动表选择错误。
+--可以考虑把子查询改写为内连接,或者改写内联视图(子查询放在from后组成一个临时表,在于其他表进行关联)&lt;/li&gt;
+&lt;li&gt;只需要内连接的语句,但是写成了左连接或者右连接。比如 select * from t left join b on t.id=b.id where b.name=&apos;abc&apos; 驱动表被固定,大概率会扫描更多的行,导致效率降低.
+--根据业务情况或sql情况,把左连接或者右连接改写为内连接&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;索引选择不同,造成性能差异较大
+1.select * from t where aid= and create&lt;em&gt;name&gt;&apos;&apos; order by id limit 1;
+选择走 id 索引或者选择走 (aid,create&lt;/em&gt;time) 索引，性能差异较大.结果集都有可能不一致
+--这个可以通过where条件过滤的值多少来大概判断,该走哪个索引&lt;/li&gt;
+&lt;li&gt;其它一些因素
+1.比如之前学习到的是否有MDL X锁
+2.innodb&lt;em&gt;buffer&lt;/em&gt;pool 设置得太小,innodb&lt;em&gt;io&lt;/em&gt;capacity 设置得太小,刷脏速度跟不上
+3.是否是对表做了 DML 语句之后,马上做 select,导致 change buffer 收益不高
+4.是否有数据空洞
+5.select 选取的数据是否在 buffer_pool 中
+6.硬件原因,资源抢占
+原因多种多样,还需要慢慢补充。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MySQL 判断高可用&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;使用 select 1 语句&lt;/p&gt;
+&lt;p&gt;用 select 1 来判断实际上不能判断主库是否可用，因为如果某个表超过了并发查询限制 select 1 仍然可以执行成功，可以在系统表中设置一个 mysql&lt;em&gt;health&lt;/em&gt;check 表来监控应用是否可用，但是不能避免如果磁盘写满的情况，因为如果 Binlog 写满磁盘会阻塞更新但并不会阻塞查询，并发查询限制的规则为: 如果开始执行语句并且没有被锁阻塞则并发查询数减1，可以通过 innodb&lt;em&gt;thread&lt;/em&gt;concurrency 来设置&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用 update 语句&lt;/p&gt;
+&lt;p&gt;既然需要做更新需要放一个有意义的字段 如 timestamp 字段，用来表示最后一次查询的时间，但是如果系统为双 Master 的主备切换，主库和备库都需要检查，需要设置一个 server_id 字段来判断是否需要更新给备库，但是如果 CPU 利用率百分百的情况下因为我们只需要执行一个 update 字段的语句可能会执行成功并没有超时会认为主库现在为可用状态，根本原因是我们采用的是外部检测方法会有随机性的问题，外部检测需要轮询来检查所以可能系统出问题了但却需要等下一个轮询才能查出来会导致主备切换延迟。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;内部统计&lt;/p&gt;
+&lt;p&gt;MySQL 5.6 版本提供了 perfrmance&lt;em&gt;schema 库，就在 file&lt;/em&gt;summary&lt;em&gt;by&lt;/em&gt;event_name 表里做了 IO 统计，&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://static001.geekbang.org/resource/image/75/dd/752ccfe43b4eab155be17401838c62dd.png&quot; alt=&quot;img&quot;&gt;&lt;/p&gt;
+&lt;p&gt;图中这一行表示统计的是 redo log 的写入时间，第一列 EVENT&lt;em&gt;NAME 表示统计的类型。接下来的三组数据，显示的是 redo log 操作的时间统计。第一组五列，是所有 IO 类型的统计。其中，COUNT&lt;/em&gt;STAR 是所有 IO 的总次数，接下来四列是具体的统计项， 单位是皮秒；前缀 SUM、MIN、AVG、MAX，顾名思义指的就是总和、最小值、平均值和最大值。第二组六列，是读操作的统计。最后一列 SUM&lt;em&gt;NUMBER&lt;/em&gt;OF&lt;em&gt;BYTES&lt;/em&gt;READ 统计的是，总共从 redo log 里读了多少个字节。第三组六列，统计的是写操作。&lt;/p&gt;
+&lt;p&gt;因为我们每次操作数据库都需要统计这些数据，会导致降低数据库性能，所以我们只需要打开自己需要统计的数据。&lt;/p&gt;
+&lt;p&gt;例如只打开 redo log 监控&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;java&quot;&gt;&lt;pre class=&quot;language-java&quot;&gt;&lt;code class=&quot;language-java&quot;&gt;mysql&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; update setup_instruments set ENABLED&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;YES&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;Timed&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;YES&apos;&lt;/span&gt; where name like &lt;span class=&quot;token string&quot;&gt;&apos;%wait/io/file/innodb/innodb_log_file%&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;可以通过 MAX_TIMER 来判断数据库是否可用&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;java&quot;&gt;&lt;pre class=&quot;language-java&quot;&gt;&lt;code class=&quot;language-java&quot;&gt;mysql&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; select event_name&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;MAX_TIMER_WAIT  FROM performance_schema&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;file_summary_by_event_name where event_name in &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;wait/io/file/innodb/innodb_log_file&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;wait/io/file/sql/binlog&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; and MAX_TIMER_WAIT&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;1000000000&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;取到异常后，把之前统计的信息清空掉，再次出现异常就可以加入到监控累计值了。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;p&gt;课程后面的内容与 DBA 日常相关目前先暂不学习当遇到相应场景时再思考&lt;/p&gt;</content:encoded></item><item><title><![CDATA[One day]]></title><description><![CDATA[学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题]]></description><link>https://github.com/collides/post/</link><guid isPermaLink="false">https://github.com/collides/post/</guid><pubDate>Wed, 14 Oct 2020 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;学习使用该博客主题, 用于以后记录日常、学习笔记、遇到的难题&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Redis 总结]]></title><description><![CDATA[一个 K/V 数据库包含什么？ 访问模块 动态库访问（动态链接库） 网络访问框架 Socket Server 请求解析 数据结构 / 操作模块 字符串 数组 链表 List Hash 索引模块  索引类型有很多，常见的有哈希表、B tree 、字典树，不同的索引结构在性能、空间…]]></description><link>https://github.com/collides/2021-7-1-Redis/</link><guid isPermaLink="false">https://github.com/collides/2021-7-1-Redis/</guid><pubDate>Wed, 01 Jul 2020 00:00:00 GMT</pubDate><content:encoded>&lt;ol&gt;
 &lt;li&gt;
 &lt;p&gt;一个 K/V 数据库包含什么？&lt;/p&gt;
 &lt;ul&gt;
